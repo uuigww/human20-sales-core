@@ -1,0 +1,14 @@
+{
+  "name": "@human20/ssot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SSOT продукта «Человек 2.0»: оффер, границы, ссылки + манифест для RAG. Потребляют core и серверный RAG.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}
