@@ -53,6 +53,18 @@ export {
   type AbuseReason,
 } from './core/abuseGuard.js';
 export {
+  InjectionGuard,
+  scanText,
+  INJECTION_PATTERNS,
+  DEFAULT_INJECTION_LIMITS,
+  type InjectionLimits,
+  type InjectionDecision,
+  type InjectionSeverity,
+  type InjectionPattern,
+} from './core/injectionGuard.js';
+export { sanitizeKnowledgeChunk, type SanitizeResult } from './core/knowledge/sanitize.js';
+export { frameUserMessage, INPUT_TRUST_NOTE, INJECTION_REMINDER } from './core/promptAssembler.js';
+export {
   type KnowledgeProvider,
   StaticKnowledgeProvider,
   RagKnowledgeProvider,
