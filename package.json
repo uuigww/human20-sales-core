@@ -11,6 +11,7 @@
     "packages/*"
   ],
   "scripts": {
+    "start": "tsx src/server/server.ts",
     "chat": "tsx src/cli.ts",
     "eval": "tsx src/eval/run.ts",
     "smoke": "tsx src/eval/smoke.ts",

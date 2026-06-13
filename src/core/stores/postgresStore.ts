@@ -73,4 +73,28 @@ export class PostgresStore implements MemoryStore {
     );
     return rows.length ? (rows[0].customer_id as string) : null;
   }
+
+  /** Горячие лиды для менеджера: сортировка по lead_score. */
+  async listHotLeads(minScore = 60, limit = 50): Promise<HotLead[]> {
+    const { rows } = await this.pool.query(
+      `SELECT customer_id, segment, interest_tariff, interest, hotness, lead_score, contact, updated_at
+         FROM leads
+        WHERE lead_score >= $1
+        ORDER BY lead_score DESC, updated_at DESC
+        LIMIT $2`,
+      [minScore, limit],
+    );
+    return rows as HotLead[];
+  }
+}
+
+export interface HotLead {
+  customer_id: string;
+  segment: string | null;
+  interest_tariff: string | null;
+  interest: number | null;
+  hotness: string | null;
+  lead_score: number | null;
+  contact: string | null;
+  updated_at: string;
 }
