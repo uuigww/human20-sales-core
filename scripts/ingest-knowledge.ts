@@ -13,6 +13,7 @@ import pg from 'pg';
 import { embedMany } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { knowledgeManifest } from '@human20/ssot';
+import { sanitizeKnowledgeChunk } from '../src/core/knowledge/sanitize.js';
 
 const EMBED_MODEL = 'text-embedding-3-small'; // 1536 dim
 const MAX_CHARS = 1400;
@@ -47,7 +48,15 @@ async function main() {
     let total = 0;
 
     for (const src of sources) {
-      const chunks = chunk(src.content);
+      // Провенанс: src приходит только из курируемого KNOWLEDGE_SOURCES (manifest), не из юзер-данных.
+      // Второй рубеж — санация каждого чанка от инъекционных конструкций.
+      const chunks = chunk(src.content).map((c) => {
+        const sane = sanitizeKnowledgeChunk(c, src.id);
+        if (sane.flags.length) {
+          console.warn(`  ⚠ инъекция в источнике ${src.id}: ${sane.flags.join(', ')} — вырезано ${sane.removed.length} фрагм.`);
+        }
+        return sane.clean;
+      });
       const { embeddings } = await embedMany({ model, values: chunks });
 
       await pool.query('DELETE FROM knowledge_chunks WHERE source_id = $1', [src.id]);
