@@ -59,3 +59,64 @@ export function scanText(text: string): { score: number; codes: string[] } {
   }
   return { score, codes };
 }
+
+export interface InjectionLimits {
+  /** Порог soft-сигнала (сумма весов). */
+  softThreshold: number;
+  /** Порог одиночного hard-сигнала. */
+  hardThreshold: number;
+  /** Сколько soft-детектов подряд от клиента эскалируют в блок. */
+  streakBlock: number;
+}
+
+export const DEFAULT_INJECTION_LIMITS: InjectionLimits = {
+  softThreshold: SCORE_THRESHOLD_SOFT,
+  hardThreshold: SCORE_THRESHOLD_HARD,
+  streakBlock: 2,
+};
+
+export type InjectionSeverity = 'none' | 'soft' | 'hard';
+
+export interface InjectionDecision {
+  detected: boolean;
+  severity: InjectionSeverity;
+  codes: string[];
+  score: number;
+  /** true → жёсткий блок: LLM не вызываем, отдаём cannedReply. */
+  block: boolean;
+  cannedReply?: string;
+}
+
+const CANNED_INJECTION =
+  'Помогу с вопросами о продукте — расскажи, что тебе нужно, и подскажу по делу.';
+
+/**
+ * Stateful-страж на клиента. Хранит серию soft-детектов в in-memory Map (как abuseGuard).
+ * Для мультиинстанса вынеси Map в Redis — интерфейс check() не меняется.
+ */
+export class InjectionGuard {
+  private streaks = new Map<string, number>();
+  private limits: InjectionLimits;
+
+  constructor(limits: Partial<InjectionLimits> = {}) {
+    this.limits = { ...DEFAULT_INJECTION_LIMITS, ...limits };
+  }
+
+  check(customerId: string, message: string): InjectionDecision {
+    const { score, codes } = scanText(message);
+
+    if (score < this.limits.softThreshold) {
+      this.streaks.set(customerId, 0); // чистое сообщение сбрасывает серию
+      return { detected: false, severity: 'none', codes, score, block: false };
+    }
+
+    const streak = (this.streaks.get(customerId) ?? 0) + 1;
+    this.streaks.set(customerId, streak);
+
+    const hard = score >= this.limits.hardThreshold || streak >= this.limits.streakBlock;
+    if (hard) {
+      return { detected: true, severity: 'hard', codes, score, block: true, cannedReply: CANNED_INJECTION };
+    }
+    return { detected: true, severity: 'soft', codes, score, block: false };
+  }
+}
