@@ -8,7 +8,7 @@
  */
 
 import { z } from 'zod';
-import { assembleSystemPrompt } from './promptAssembler.js';
+import { assembleSystemPrompt, frameUserMessage, INJECTION_REMINDER } from './promptAssembler.js';
 import { actionSchema, AUTONOMOUS_PAYMENT_TARIFFS, type Action } from './actions.js';
 import {
   applyUpdate,
@@ -90,6 +90,8 @@ export interface RespondInput {
   provider?: LLMProvider;
   /** Источник продуктовых знаний: дефолт — статика из @human20/ssot; на сервере — RAG из pgvector. */
   knowledge?: KnowledgeProvider;
+  /** Вход помечен анти-инъекцией как soft: усилить ремайндер и записать note. */
+  untrusted?: boolean;
 }
 
 export interface RespondResult {
@@ -110,10 +112,15 @@ export async function respond(input: RespondInput): Promise<RespondResult> {
     turnCount: (input.state?.turnCount ?? 0) + 1,
   };
 
-  const messages: ChatMessage[] = [...history, { role: 'user', content: input.message }];
+  const messages: ChatMessage[] = [
+    ...history,
+    { role: 'user', content: frameUserMessage(input.message) },
+  ];
   const knowledge = input.knowledge ?? defaultKnowledge;
   const productContext = await knowledge.productContext(input.message);
-  const baseSystem = assembleSystemPrompt(baseState, productContext);
+  const baseSystem =
+    assembleSystemPrompt(baseState, productContext) +
+    (input.untrusted ? '\n\n' + INJECTION_REMINDER : '');
 
   let lastViolations: Violation[] = [];
 
@@ -144,6 +151,9 @@ export async function respond(input: RespondInput): Promise<RespondResult> {
     if (guard.ok) {
       const { resolved, unknown } = resolveLinkIds(result.links ?? []);
       const update = result.stateUpdate as LeadStateUpdate;
+      if (input.untrusted) {
+        update.addNotes = [...(update.addNotes ?? []), '⚠ возможная инъекция во входящем сообщении'];
+      }
       if (unknown.length) {
         update.addNotes = [...(update.addNotes ?? []), `модель запросила неизвестные ссылки: ${unknown.join(', ')}`];
       }
