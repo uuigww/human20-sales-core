@@ -18,6 +18,7 @@ import { respond, type RespondResult } from './respond.js';
 import { createLeadState, type LeadState } from './leadState.js';
 import type { ChatMessage, LLMProvider } from './llm/provider.js';
 import type { AbuseGuard, AbuseReason } from './abuseGuard.js';
+import type { InjectionGuard } from './injectionGuard.js';
 import type { KnowledgeProvider } from './knowledge/provider.js';
 import { resolveLinkIds } from '@human20/ssot';
 
@@ -132,6 +133,8 @@ export interface ConverseInput {
   historyWindow?: number;
   /** Анти-спам/анти-абуз. Если задан — проверяется ДО вызова LLM (заблокированное = 0 токенов). */
   guard?: AbuseGuard;
+  /** Анти-инъекция. Если задан — проверяется ДО вызова LLM (hard → блок 0 токенов, soft → флаг). */
+  injectionGuard?: InjectionGuard;
   /** Источник знаний (статика/RAG). Прокидывается в respond(). */
   knowledge?: KnowledgeProvider;
 }
@@ -139,7 +142,7 @@ export interface ConverseInput {
 export interface ConverseResult extends RespondResult {
   customerId: string;
   /** Если сообщение заблокировано guard'ом — код причины (LLM не вызывался). */
-  blocked?: AbuseReason;
+  blocked?: AbuseReason | 'injection';
 }
 
 /**
@@ -147,7 +150,7 @@ export interface ConverseResult extends RespondResult {
  * Адаптеру остаётся показать reply/links и исполнить actions.
  */
 export async function converse(input: ConverseInput): Promise<ConverseResult> {
-  const { store, channel, userId, message, provider, guard, knowledge } = input;
+  const { store, channel, userId, message, provider, guard, injectionGuard, knowledge } = input;
   const customerId = makeCustomerId(channel, userId);
 
   const rec = (await store.load(customerId)) ?? newRecord(customerId, channel);
@@ -169,10 +172,28 @@ export async function converse(input: ConverseInput): Promise<ConverseResult> {
     }
   }
 
+  // Анти-инъекция ДО LLM: hard/streak → блок (0 токенов); soft → флаг untrusted в respond().
+  let untrusted = false;
+  if (injectionGuard) {
+    const inj = injectionGuard.check(customerId, message);
+    if (inj.block) {
+      return {
+        reply: inj.cannedReply ?? 'Помогу с вопросами о продукте — расскажи, что тебе нужно?',
+        actions: [],
+        links: [],
+        state: rec.state,
+        violations: [],
+        customerId,
+        blocked: 'injection',
+      };
+    }
+    untrusted = inj.detected;
+  }
+
   const window = input.historyWindow ?? 12;
   const recentHistory = rec.history.slice(-window);
 
-  const result = await respond({ message, history: recentHistory, state: rec.state, provider, knowledge });
+  const result = await respond({ message, history: recentHistory, state: rec.state, provider, knowledge, untrusted });
 
   rec.state = result.state;
   rec.history.push({ role: 'user', content: message });
