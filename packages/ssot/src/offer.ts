@@ -56,7 +56,7 @@ export const TARIFFS: Record<TariffId, Tariff> = {
     id: 'dfy',
     name: 'Готовый агент на вашем сервере',
     priceRub: 48000,
-    priceLabel: '48 000₽ (разово за агента навсегда; VPS — отдельно, через нас −50%)',
+    priceLabel: '48 000₽ (разово, агент навсегда; сервер арендуешь сам на Timeweb по промокоду HUMAN20 — отдельно)',
     canCloseAutonomously: true, // но только при requiresFixedScope=true выполненном по факту
     requiresFixedScope: true,
     requiresHumanHandoff: false,
@@ -109,4 +109,4 @@ export const NEVER_PROMISE: readonly string[] = [
 export const HUMAN_HANDOFF_CONTACT = '@chipmanager';
 
 /** Платёжный маршрут для прямых тарифов. */
-export const PAYMENT_METHOD = 'оплата по QR через банк «Точка» (Tochka QR)';
+export const PAYMENT_METHOD = 'оплата на странице human20.app/payment (для 48k — ?product=ready_agent)';

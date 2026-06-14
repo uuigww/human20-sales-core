@@ -41,8 +41,8 @@ export const LINKS: Record<string, LinkEntry> = {
     id: 'payment_page',
     title: 'Страница оплаты',
     url: 'https://human20.app/payment',
-    description: 'Страница выбора формата и оплаты по QR (воркшоп 18k, Среда).',
-    whenToUse: 'Когда ведёшь к оплате воркшопа/Среды и нужен общий вход на оплату.',
+    description: 'Страница выбора формата и оплаты (воркшоп 18k; Готовый агент 48k — путь ?product=ready_agent; Среда).',
+    whenToUse: 'Когда ведёшь к оплате воркшопа/Среды/48k и нужен вход на оплату.',
     ready: true,
   },
   demo_bot: {
@@ -73,8 +73,8 @@ export const LINKS: Record<string, LinkEntry> = {
     id: 'manager',
     title: 'Менеджер @chipmanager',
     url: 'https://t.me/chipmanager',
-    description: 'Живой человек: high-ticket (200k+), 48k без scope, юр./нестандартные вопросы.',
-    whenToUse: 'Передача живому: 200k+/enterprise, 48k без зафиксированного scope, по просьбе.',
+    description: 'Живой человек. Контакт показываем ТОЛЬКО при нестандартной оплате и при намерении на 200k+/enterprise (либо по настойчивой просьбе клиента).',
+    whenToUse: 'Вопрос об оплате способом, которого у нас нет; намерение на внедрение 200k+/enterprise; клиент сам настойчиво просит человека. При 48k без scope контакт НЕ давать — фиксировать лид.',
     ready: true,
   },
   waitlist: {
@@ -84,6 +84,30 @@ export const LINKS: Record<string, LinkEntry> = {
     description: 'Предзапись на воркшоп до открытия продаж — ранняя цена.',
     whenToUse: 'Тёплый, но «не сейчас»/до старта продаж — записываем в лист ожидания.',
     ready: false,
+  },
+  rentals: {
+    id: 'rentals',
+    title: 'Аренда сервера (VPS) — Timeweb',
+    url: 'https://human20.app/rentals',
+    description: 'Как арендовать сервер под Готового агента (48k): Timeweb, промокод HUMAN20, тарифы и шаги. Партнёрская ссылка внутри.',
+    whenToUse: 'Клиент уточняет про сервер/VPS для 48k: где брать, сколько стоит, как настроить.',
+    ready: true,
+  },
+  reviews: {
+    id: 'reviews',
+    title: 'Отзывы участников',
+    url: 'https://human20.app/reviews',
+    description: 'Страница отзывов участников первого воркшопа «Человек 2.0».',
+    whenToUse: 'Просит социальное доказательство / «а есть отзывы?».',
+    ready: true,
+  },
+  wanttopay: {
+    id: 'wanttopay',
+    title: 'Wanttopay — оплата зарубежной картой',
+    url: 'https://wanttopay.net/?pid=Z06ZC',
+    description: 'Партнёр для оплаты зарубежной картой, если у клиента нет российской карты.',
+    whenToUse: 'Клиент за рубежом / нет российской карты и спрашивает, как оплатить.',
+    ready: true,
   },
   // --- Соцсети (заполнить URL; добавляй сюда новые каналы по аналогии) ---
   vk: {
