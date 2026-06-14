@@ -18,7 +18,7 @@ import {
 } from './leadState.js';
 import { checkGuardrails, correctionNote, type Violation } from './guardrails.js';
 import { defaultProvider } from './llm/gateway.js';
-import type { ChatMessage, LLMProvider } from './llm/provider.js';
+import type { ChatMessage, LLMProvider, StructuredRequest } from './llm/provider.js';
 import { defaultKnowledge, type KnowledgeProvider } from './knowledge/provider.js';
 import { models } from '../../config/models.js';
 import { HUMAN_HANDOFF_CONTACT, resolveLinkIds, type ResolvedLink } from '@human20/ssot';
@@ -132,7 +132,7 @@ export async function respond(input: RespondInput): Promise<RespondResult> {
 
     let result: ModelResponse;
     try {
-      result = await provider.runStructured<ModelResponse>({
+      result = await runStructuredWithRetry<ModelResponse>(provider, {
         system,
         messages,
         schema: responseSchema,
@@ -180,6 +180,27 @@ function sanitizeActions(actions: Action[]): Action[] {
     }
     return true;
   });
+}
+
+/**
+ * Вызов LLM с повторами при сбое генерации структурного ответа. Дешёвые модели
+ * (gpt-4o-mini и т.п.) стохастически промахиваются мимо строгой схемы — повторная
+ * попытка обычно проходит. Без этого один промах ронял весь диалог в handoff.
+ */
+const GENERATION_ATTEMPTS = 3;
+async function runStructuredWithRetry<T>(
+  provider: LLMProvider,
+  req: StructuredRequest<T>,
+): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < GENERATION_ATTEMPTS; i++) {
+    try {
+      return await provider.runStructured<T>(req);
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr as Error;
 }
 
 function safeFallback(state: LeadState, note: string): RespondResult {

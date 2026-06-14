@@ -20,6 +20,8 @@ export interface ModelConfig {
   maxGuardrailRetries: number;
   /** Кап выходных токенов — ответ не может «взорваться» по стоимости. */
   maxOutputTokens: number;
+  /** Усилие reasoning для reasoning-моделей (gpt-5 и т.п.). low = дёшево и достаточно для продаж. */
+  reasoningEffort?: string;
 }
 
 /**
@@ -50,5 +52,6 @@ export const models: ModelConfig = {
     DEFAULT_JUDGE_MODEL,
   temperature: 0.6,
   maxGuardrailRetries: 1,
-  maxOutputTokens: 700,
+  maxOutputTokens: 6000,
+  reasoningEffort: process.env.SALES_REASONING_EFFORT?.trim() || 'low',
 };
