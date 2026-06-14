@@ -38,6 +38,27 @@ export const KNOWLEDGE_SOURCES: KnowledgeSource[] = [
     kind: 'boundaries',
     description: 'Жёсткие правила: автономность по тарифам, гарантии/возвраты (оферта), 48k не «аренда».',
   },
+  {
+    id: 'faq',
+    title: 'FAQ — частые вопросы',
+    file: 'faq.md',
+    kind: 'faq',
+    description: 'Частые вопросы клиентов: 18k vs 48k, сервер/Timeweb/промокод, оплата, возврат, не технарь, отзывы, Среда, 200k.',
+  },
+  {
+    id: 'glossary',
+    title: 'Глоссарий простыми словами',
+    file: 'glossary.md',
+    kind: 'doc',
+    description: 'Термины для клиента: ИИ-агент, Hermes, PowerPack, вайбкодинг/Codex, Среда, сервер/VPS, ось DIY→DFY.',
+  },
+  {
+    id: 'positioning',
+    title: 'Позиционирование, воронка и high-ticket',
+    file: 'positioning.md',
+    kind: 'doc',
+    description: 'Отстройка от курсов, воронка по уровням, детали 200k (4 сессии, карта масштабирования, агент-руководитель бонус), внедрение от 1.5М, AI-оркестратор.',
+  },
 ];
 
 /** Прочитать содержимое источника (для индексатора RAG). */
